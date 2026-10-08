@@ -1,0 +1,13 @@
+{
+  "after": {
+    "from": "nixpkgs:b1b875982b17dabde9b4a37f3e229e74913e6db3",
+    "version": "2.1.272"
+  },
+  "before": {
+    "from": "nixpkgs:56c02bc00adcf003215cc4bd996d6efaf4cff188",
+    "version": "2.1.238"
+  },
+  "changelog_range_sha256": "a9c0fe074d1f422564cd0624e5635cd9538ae62ed8c469b0a8cc76ef440dd065",
+  "schema": 1,
+  "watchlist_sha256": "1ab411228a67c3cd3c093230a76c78e3575be010c778625bf5ceb1765e1d1d93"
+}
