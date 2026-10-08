@@ -1,0 +1,16 @@
+2026-10-08T06:47:07Z
+# In a throwaway clone of release-watch at cfae5d0; the real repository is not touched.
+# C. one word changed inside a quoted line, and committed
+$ scripts/verify
+OK       e6b3b50890ff  2.1.238 -> 2.1.272  279 quoted
+INVALID  fcd4b60f849c  2.1.224 -> 2.1.238
+         - not an exact changelog line of that version: 2.1.238: 'Plugin marketplace: `headersHelper` on a url marketplace or '
+2 inputs checked: FAILED
+exit 1
+
+# D. that report deleted, and committed
+$ scripts/verify
+OK       e6b3b50890ff  2.1.238 -> 2.1.272  279 quoted
+MISSING  fcd4b60f849c  2.1.224 -> 2.1.238  no reports/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.md
+2 inputs checked: FAILED
+exit 1

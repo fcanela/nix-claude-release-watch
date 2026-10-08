@@ -1,0 +1,10 @@
+2026-10-08T06:39:50Z
+$ scripts/run inputs/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.json   (second time, same input)
+release-watch: report already exists, nothing written
+exit 0
+2026-10-08T06:39:50Z
+HEAD before 54ab81680a5e71f65e237314747bd32714ec8d60
+HEAD after  54ab81680a5e71f65e237314747bd32714ec8d60
+report hash before: cc4216704bb6dce99bfa0f990ae0724f033ca82a3104f81fea2ebe5842861563  reports/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.md
+report hash after:  cc4216704bb6dce99bfa0f990ae0724f033ca82a3104f81fea2ebe5842861563  reports/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.md
+1

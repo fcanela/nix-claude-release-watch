@@ -1,0 +1,25 @@
+2026-10-08T08:31:49Z
+installed: 2.1.285 (Claude Code)
+$ scripts/weekly
+release-watch: report written and committed
+exit 0
+2026-10-08T08:35:56Z
+f507d9c report: 2.1.285 -> 2.1.289, 83 relevant
+bd6f6ac input: 2.1.285 -> 2.1.289
+cfae5d0 report: 2.1.238 -> 2.1.272, 279 relevant
+54ab816 report: 2.1.224 -> 2.1.238, 93 relevant
+inputs:
+94a37e0c14bbcc9c738676521f6e02ed324c9a4fe5430b3f4efcda48d077157a.json
+e6b3b50890ff396bd74c7d9dc85425e5a02a120785e8d7b417f631084011b9e0.json
+fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.json
+
+reports:
+94a37e0c14bbcc9c738676521f6e02ed324c9a4fe5430b3f4efcda48d077157a.md
+e6b3b50890ff396bd74c7d9dc85425e5a02a120785e8d7b417f631084011b9e0.md
+fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.md
+$ scripts/verify
+OK       94a37e0c14bb  2.1.285 -> 2.1.289  83 quoted
+OK       e6b3b50890ff  2.1.238 -> 2.1.272  279 quoted
+OK       fcd4b60f849c  2.1.224 -> 2.1.238  93 quoted
+3 inputs checked: all reports valid
+exit 0

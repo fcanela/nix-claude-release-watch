@@ -1,0 +1,9 @@
+❯ scripts/verify
+OK       e6b3b50890ff  2.1.238 -> 2.1.272  279 quoted
+OK       fcd4b60f849c  2.1.224 -> 2.1.238  93 quoted
+2 inputs checked: all reports valid
+release-watch on  master
+❯ scripts/run inputs/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.json
+release-watch: report already exists, nothing written
+release-watch on  master
+❯

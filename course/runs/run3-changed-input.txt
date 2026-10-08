@@ -1,0 +1,31 @@
+2026-10-08T06:40:00Z
+$ scripts/fixture-input fixtures/locks/lock-4.json fixtures/locks/lock-5.json
+inputs/e6b3b50890ff396bd74c7d9dc85425e5a02a120785e8d7b417f631084011b9e0.json
+{
+  "after": {
+    "from": "nixpkgs:b1b875982b17dabde9b4a37f3e229e74913e6db3",
+    "version": "2.1.272"
+  },
+  "before": {
+    "from": "nixpkgs:56c02bc00adcf003215cc4bd996d6efaf4cff188",
+    "version": "2.1.238"
+  },
+  "changelog_range_sha256": "a9c0fe074d1f422564cd0624e5635cd9538ae62ed8c469b0a8cc76ef440dd065",
+  "schema": 1,
+  "watchlist_sha256": "1ab411228a67c3cd3c093230a76c78e3575be010c778625bf5ceb1765e1d1d93"
+}
+
+$ scripts/run inputs/e6b3b50890ff396bd74c7d9dc85425e5a02a120785e8d7b417f631084011b9e0.json   (third run, changed input)
+release-watch: report written and committed
+exit 0
+2026-10-08T06:46:41Z
+cfae5d0 report: 2.1.238 -> 2.1.272, 279 relevant
+54ab816 report: 2.1.224 -> 2.1.238, 93 relevant
+e2e6d1d Add the weekly systemd user timer (not installed) and a README
+e6b3b50890ff396bd74c7d9dc85425e5a02a120785e8d7b417f631084011b9e0.md
+fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.md
+$ scripts/verify
+OK       e6b3b50890ff  2.1.238 -> 2.1.272  279 quoted
+OK       fcd4b60f849c  2.1.224 -> 2.1.238  93 quoted
+2 inputs checked: all reports valid
+exit 0

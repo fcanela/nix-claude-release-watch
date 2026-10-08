@@ -1,0 +1,7 @@
+2026-10-08T06:34:53Z
+$ scripts/fixture-input fixtures/locks/lock-3.json fixtures/locks/lock-4.json
+inputs/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.json
+exit 0
+.rw-rw-r--   0 user  8 Oct 13:26 -- .gitkeep
+.rw-rw-r-- 419 user  8 Oct 13:34 -N fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.json
+?? inputs/fcd4b60f849caec158856ac6ebeec74d7c24446f22bcc72aad50d1de1a7823a8.json
