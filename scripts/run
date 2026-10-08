@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Run the job on one input: scripts/run inputs/<hash>.json
+
+Writes and commits reports/<hash>.md, then sends one desktop notification.
+Does nothing if the report already exists.
+"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import rwlib
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit(__doc__.strip())
+    try:
+        status = rwlib.run_input(rwlib.ROOT, Path(sys.argv[1]).resolve(), rwlib.claude_agent, rwlib.desktop_notify)
+    except rwlib.JobError as e:
+        sys.exit(f"release-watch: FAILED: {e}")
+    print("release-watch: report already exists, nothing written" if status == "exists"
+          else "release-watch: report written and committed")
+
+
+main()

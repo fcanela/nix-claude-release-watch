@@ -1,0 +1,22 @@
+# Features of Claude Code this setup relies on. One entry per line: "id: description".
+# Editing this file changes the input hash, so the next run writes a new report.
+
+# From modules/programs/claude-code in the home-manager flake
+hooks: command hooks on PreToolUse, PostToolUse and PostToolUseFailure with a Bash matcher (atuin records agent commands); Stop hooks registered by plugins (ralph-loop)
+plugins: enabledPlugins, the claude-plugins-official marketplace, claude plugin install/update, --plugin-dir
+mcp: HTTP MCP servers with browser OAuth, .mcp.json, /mcp (tenderly)
+skills: personal skills in ~/.claude/skills, SKILL.md frontmatter, disable-model-invocation
+settings-file: a writable user ~/.claude/settings.json; /model, /config, /effort, effortLevel, user-scope "always allow" permissions
+attribution: attribution.commit, attribution.pr, attribution.sessionUrl, includeCoAuthoredBy
+seeded-settings: model opus[1m], theme, tui fullscreen, skipWorkflowUsageWarning, cleanupPeriodDays
+
+# Added by hand
+goal-loop: /goal and /loop
+workflows: /workflows, the Workflow tool and ultracode
+routines: /schedule and routines (scheduled cloud agents)
+advisor: the advisor tool
+sandbox: the sandbox for Bash commands
+subagents: subagents (the Agent tool, custom agents) and git worktrees
+remote-control: Remote Control (/remote-control, driving a local session from claude.ai/code or the phone)
+print-mode: claude -p (print mode) with its flags and structured output (--output-format, --json-schema, --tools)
+usage: the /usage panel

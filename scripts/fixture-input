@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""Write the input for a real past update, from two lock fixtures:
+
+    scripts/fixture-input fixtures/locks/<before>.json fixtures/locks/<after>.json
+
+Prints the path of the input; pass it to scripts/run. No network, no agent.
+"""
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import rwlib
+
+
+def side(mapping, lock_path):
+    rev = json.loads(Path(lock_path).read_text())["nixpkgs-unstable"]["locked"]["rev"]
+    if rev not in mapping:
+        sys.exit(f"{rev} is not in {rwlib.VERSIONS}")
+    return {"version": mapping[rev]["version"], "from": f"nixpkgs:{rev}"}
+
+
+def main():
+    if len(sys.argv) != 3:
+        sys.exit(__doc__.strip())
+    mapping = json.loads((rwlib.ROOT / rwlib.VERSIONS).read_text())
+    data, digest = rwlib.make_input(rwlib.ROOT, side(mapping, sys.argv[1]), side(mapping, sys.argv[2]))
+    print(rwlib.write_input(rwlib.ROOT, data, digest).relative_to(rwlib.ROOT))
+
+
+main()

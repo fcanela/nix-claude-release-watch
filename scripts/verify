@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Independent check of the committed reports. Run by a person, never by the job.
+
+    scripts/verify
+
+Reads only what is committed (git HEAD) and shares no code with the job.
+Prints one line per input (OK, MISSING or INVALID with the reasons) and exits
+non-zero if anything is missing, invalid, orphaned or uncommitted.
+"""
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CHECKED_PATHS = ["inputs", "reports", "changelog/CHANGELOG.md", "watchlist.txt", "versions.json"]
+
+
+def git(*args):
+    return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, check=True).stdout
+
+
+def committed(path):
+    return git("show", f"HEAD:{path}")
+
+
+def committed_files(directory):
+    return [p for p in git("ls-tree", "-r", "--name-only", "HEAD", "--", directory).decode().splitlines()
+            if not p.endswith(".gitkeep")]
+
+
+def number(version):
+    if not re.fullmatch(r"\d+(\.\d+)*", version):
+        raise ValueError(f"not a version: {version!r}")
+    return [int(x) for x in version.split(".")]
+
+
+def parse_changelog(text):
+    """{version: set of exact lines under its heading}, plus the headings in file order."""
+    lines_of, order, current = {}, [], None
+    for line in text.split("\n"):
+        if line.startswith("## "):
+            current = line[3:].strip()
+            order.append(current)
+            lines_of.setdefault(current, [])
+        elif current is not None:
+            lines_of[current].append(line)
+    return lines_of, order
+
+
+def parse_report(text):
+    """Header fields and [(version, quote, touches)] as written in the report."""
+    header, quotes, version, pending, problems = {}, [], None, None, []
+    for line in text.split("\n"):
+        if pending is not None:
+            if not line.strip():
+                continue
+            if line.startswith("Touches: "):
+                quotes.append((version, pending, [t.strip() for t in line[9:].split(",")]))
+            else:
+                problems.append(f"quote without a Touches line: {pending[:60]!r}")
+            pending = None
+            if line.startswith("Touches: "):
+                continue
+        if line.startswith("## "):
+            version = line[3:].strip()
+        elif line.startswith("> "):
+            if version is None:
+                problems.append(f"quote before any version heading: {line[2:62]!r}")
+            pending = line[2:]
+        elif version is None:
+            m = re.match(r"(Input|Before|After|Relevant changes): (.*)", line)
+            if m:
+                header[m.group(1)] = m.group(2)
+    if pending is not None:
+        problems.append(f"quote without a Touches line: {pending[:60]!r}")
+    return header, quotes, problems
+
+
+def check_input(name, data, changelog, watchlist, mapping):
+    """(label, input document or None, problems) for one committed input file."""
+    problems = []
+    digest = hashlib.sha256(data).hexdigest()
+    if name != f"inputs/{digest}.json":
+        return name, None, [f"file name is not the sha256 of its bytes ({digest})"]
+    try:
+        doc = json.loads(data)
+        before, after = doc["before"]["version"], doc["after"]["version"]
+        lo, hi = number(before), number(after)
+        sides = [doc["before"], doc["after"]]
+        range_hash, watch_hash = doc["changelog_range_sha256"], doc["watchlist_sha256"]
+    except (ValueError, KeyError, TypeError) as e:
+        return digest[:12], None, [f"input is malformed: {e}"]
+    label = f"{digest[:12]}  {before} -> {after}"
+
+    if hashlib.sha256(watchlist).hexdigest() != watch_hash:
+        problems.append("the committed watchlist is not the one this input was made with")
+    lines_of, order = changelog
+    in_range = "".join(
+        f"## {v}\n" + "".join(l + "\n" for l in lines_of[v] if l.startswith("- "))
+        for v in order if lo < number(v) <= hi
+    )
+    if hashlib.sha256(in_range.encode()).hexdigest() != range_hash:
+        problems.append(f"the committed changelog for {before}..{after} is not the one this input was made with")
+    known = {entry["version"] for entry in mapping.values()}
+    for s in sides:
+        origin = str(s.get("from", ""))
+        if origin.startswith("nixpkgs:"):
+            if mapping.get(origin[8:], {}).get("version") != s["version"]:
+                problems.append(f"versions.json does not map {origin[8:20]} to {s['version']}")
+        elif origin == "nixpkgs-unstable":
+            if s["version"] not in known:
+                problems.append(f"versions.json has no nixpkgs revision with {s['version']}")
+        elif origin != "installed":
+            problems.append(f"unknown origin {origin!r}")
+    return label, doc, problems
+
+
+def check_report(digest, doc, text, changelog, watch_ids):
+    lines_of, _ = changelog
+    before, after = doc["before"]["version"], doc["after"]["version"]
+    lo, hi = number(before), number(after)
+    header, quotes, problems = parse_report(text)
+    if header.get("Input") != digest:
+        problems.append("the Input line is not this input's hash")
+    if not header.get("Before", "").startswith(before + " ") or not header.get("After", "").startswith(after + " "):
+        problems.append("the Before/After lines do not match the input")
+    if header.get("Relevant changes") != str(len(quotes)):
+        problems.append(f"says {header.get('Relevant changes')} relevant changes but quotes {len(quotes)}")
+    seen = set()
+    for version, quote, touches in quotes:
+        where = f"{version}: {quote[:60]!r}"
+        try:
+            n = number(version)
+        except (ValueError, TypeError):
+            problems.append(f"quote under a heading that is not a version: {where}")
+            continue
+        if not lo < n <= hi:
+            problems.append(f"outside the range ({before}, {after}]: {where}")
+        if "- " + quote not in lines_of.get(version, ()):
+            problems.append(f"not an exact changelog line of that version: {where}")
+        if (version, quote) in seen:
+            problems.append(f"quoted twice: {where}")
+        seen.add((version, quote))
+        unknown = [t for t in touches if t not in watch_ids]
+        if unknown or not touches:
+            problems.append(f"touches unknown watchlist entries {unknown}: {where}")
+    return len(quotes), problems
+
+
+def main():
+    failed = False
+    dirty = git("status", "--porcelain", "--", *CHECKED_PATHS).decode().splitlines()
+    for line in dirty:
+        if line.endswith(".gitkeep"):
+            continue
+        failed = True
+        print(f"UNCOMMITTED  {line[3:]}")
+
+    changelog = parse_changelog(committed("changelog/CHANGELOG.md").decode())
+    watchlist = committed("watchlist.txt")
+    watch_ids = {m.group(1) for m in re.finditer(r"^([a-z0-9-]+): ", watchlist.decode(), re.M)}
+    mapping = json.loads(committed("versions.json"))
+    reports = set(committed_files("reports"))
+
+    inputs = committed_files("inputs")
+    for name in inputs:
+        data = committed(name)
+        label, doc, problems = check_input(name, data, changelog, watchlist, mapping)
+        digest = hashlib.sha256(data).hexdigest()
+        report = f"reports/{digest}.md"
+        count = None
+        if doc is not None:
+            if report not in reports:
+                failed = True
+                print(f"MISSING  {label}  no {report}")
+                for p in problems:
+                    print(f"         - {p}")
+                continue
+            count, more = check_report(digest, doc, committed(report).decode(), changelog, watch_ids)
+            problems += more
+        reports.discard(report)
+        if problems:
+            failed = True
+            print(f"INVALID  {label}")
+            for p in problems:
+                print(f"         - {p}")
+        else:
+            print(f"OK       {label}  {count} quoted")
+    for orphan in sorted(reports):
+        failed = True
+        print(f"INVALID  {orphan}  no input has this hash")
+
+    print(f"{len(inputs)} inputs checked: {'FAILED' if failed else 'all reports valid'}")
+    sys.exit(1 if failed else 0)
+
+
+main()
