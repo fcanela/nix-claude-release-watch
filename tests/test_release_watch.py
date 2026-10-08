@@ -216,5 +216,86 @@ class VerifyCatches(Case):
         self.assert_invalid("INVALID", "is not the one this input was made with")
 
 
+class Weekly(Case):
+    """The network is replaced by a function that serves the committed real data."""
+
+    installed_version = "2.1.238"
+    head_rev = "b1b875982b17dabde9b4a37f3e229e74913e6db3"  # has 2.1.272
+
+    def setUp(self):
+        super().setUp()
+        self.changelog = (REPO / rwlib.CHANGELOG).read_text()
+        self.offline = False
+
+    def fetch(self, url):
+        if self.offline:
+            raise OSError("network is down")
+        if url == rwlib.NIXPKGS_HEAD_URL:
+            return json.dumps({"sha": self.head_rev}).encode()
+        if url == MAPPING[self.head_rev]["source"]:
+            return json.dumps({"version": MAPPING[self.head_rev]["version"]}).encode()
+        if url == rwlib.CHANGELOG_HEAD_URL:
+            return json.dumps([{"sha": "0" * 40}]).encode()
+        if url == rwlib.CHANGELOG_RAW_URL.format(commit="0" * 40):
+            return self.changelog.encode()
+        raise OSError(f"404: {url}")
+
+    def weekly(self, agent=hook_agent):
+        return rwlib.weekly(self.root, self.fetch, lambda: self.installed_version, agent, self.notify)
+
+    def test_first_week_writes_then_same_input_writes_nothing(self):
+        # week 1: the changelog as it was when 2.1.272 was its newest entry
+        full = self.changelog
+        self.changelog = "# Changelog\n\n" + full[full.index("## 2.1.272\n"):]
+        self.assertEqual(self.weekly(), "written")
+        self.assertEqual(len(self.notes), 1)
+        self.assertEqual(self.verify()[0], 0, self.verify()[1])
+        doc = json.loads(next((self.root / "inputs").glob("*.json")).read_text())
+        self.assertEqual((doc["before"], doc["after"]), (
+            {"version": "2.1.238", "from": "installed"}, {"version": "2.1.272", "from": "nixpkgs-unstable"}))
+
+        # week 2: upstream added newer entries, the two versions did not move
+        self.changelog = full
+        head, committed = self.head(), (self.root / rwlib.CHANGELOG).read_text()
+        self.assertEqual(self.weekly(lambda prompt: self.fail("agent called")), "unchanged")
+        self.assertEqual((self.head(), len(self.notes)), (head, 1))
+        self.assertEqual((self.root / rwlib.CHANGELOG).read_text(), committed)
+        self.assertEqual(self.git("status", "--porcelain"), "")
+
+    def test_already_on_the_available_version(self):
+        self.installed_version = "2.1.272"
+        self.assertEqual(self.weekly(lambda prompt: self.fail("agent called")), "written")
+        report = next((self.root / "reports").glob("*.md")).read_text()
+        self.assertIn("Installed version 2.1.272 is the available one: nothing to update.", report)
+        self.assertIn("0 relevant changes", self.notes[0])
+        self.assertEqual(self.verify()[0], 0)
+        self.assertEqual(self.weekly(), "unchanged")
+        self.assertEqual(len(self.notes), 1)
+
+    def test_older_revision_manifest_name(self):
+        self.head_rev = "56c02bc00adcf003215cc4bd996d6efaf4cff188"  # only has manifest.json
+        self.installed_version = "2.1.224"
+        self.assertEqual(self.weekly(), "written")
+        self.assertEqual(self.verify()[0], 0)
+
+    def test_network_failure_writes_nothing(self):
+        self.offline = True
+        head = self.head()
+        with self.assertRaisesRegex(rwlib.JobError, "network step failed"):
+            self.weekly()
+        self.assertEqual((self.head(), self.notes, self.git("status", "--porcelain")), (head, [], ""))
+
+    def test_failed_agent_is_visible_and_retried(self):
+        with self.assertRaises(rwlib.JobError):
+            self.weekly(lambda prompt: {"findings": [{"version": "2.1.272", "quote": "made up", "watch": ["hooks"], "why": "x"}]})
+        self.assertEqual(self.notes, [])
+        code, out = self.verify()
+        self.assertEqual(code, 1)
+        self.assertIn("MISSING", out)
+        self.assertEqual(self.weekly(), "written")
+        self.assertEqual(len(self.notes), 1)
+        self.assertEqual(self.verify()[0], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

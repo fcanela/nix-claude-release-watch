@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""The weekly run: scripts/weekly
+
+Reads the installed Claude Code version and the one nixpkgs-unstable has today,
+refreshes the changelog and writes the input (this script, not the agent, uses
+the network). Then runs the job on that input. If the input is the same as the
+last one, nothing is written.
+"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import rwlib
+
+
+def main():
+    try:
+        status = rwlib.weekly(rwlib.ROOT, rwlib.http_fetch, rwlib.installed_claude_version,
+                              rwlib.claude_agent, rwlib.desktop_notify)
+    except rwlib.JobError as e:
+        sys.exit(f"release-watch: FAILED: {e}")
+    print({
+        "unchanged": "release-watch: same input as the last run, nothing written",
+        "exists": "release-watch: report already exists, nothing written",
+        "written": "release-watch: report written and committed",
+    }[status])
+
+
+main()
