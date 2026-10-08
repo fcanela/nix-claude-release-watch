@@ -1,0 +1,21 @@
+2026-10-08T09:00:51Z
+# In a throwaway clone of release-watch at 5b48b7f. The agent is replaced by a fake program through RELEASE_WATCH_CLAUDE, to show what the wrapper does with a bad answer.
+input: inputs/a48e62a5f8abe3fa1c46d4fa905d49050a27a0416c9373285845ddb569c76c36.json (2.1.201 to 2.1.224, a new input with no report yet)
+
+# 1. The agent answers with plain text, not JSON
+$ RELEASE_WATCH_CLAUDE=fake-garbage scripts/run inputs/a48e62a5f8abe3fa1c46d4fa905d49050a27a0416c9373285845ddb569c76c36.json
+release-watch: FAILED: input a48e62a5f8ab (2.1.201 -> 2.1.224): agent output is not JSON: 'Sure! Here are the changes you asked for: plugins got better.\n'; no report written
+exit 1
+reports: 3   commits: 8   report for this input: none
+
+# 2. The agent answers with valid JSON, but its quote is not in the changelog
+$ RELEASE_WATCH_CLAUDE=fake-invented scripts/run inputs/a48e62a5f8abe3fa1c46d4fa905d49050a27a0416c9373285845ddb569c76c36.json
+release-watch: FAILED: input a48e62a5f8ab (2.1.201 -> 2.1.224): agent quote is not an entry of 2.1.224 in range: 'Added a feature that does not exist in the changelog'; no report written
+exit 1
+reports: 3   commits: 8   report for this input: none
+
+# 3. The agent exits with an error
+$ RELEASE_WATCH_CLAUDE=fake-fails scripts/run inputs/a48e62a5f8abe3fa1c46d4fa905d49050a27a0416c9373285845ddb569c76c36.json
+release-watch: FAILED: input a48e62a5f8ab (2.1.201 -> 2.1.224): agent exited 1: authentication failed; no report written
+exit 1
+reports: 3   commits: 8   report for this input: none

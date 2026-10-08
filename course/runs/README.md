@@ -10,5 +10,6 @@ Saved on 2026-10-08, for the report of the AI course. Times are UTC. The contrac
 | `run4-check-and-repeat-run-by-hand.txt` | `scripts/verify` and the repeat run typed by me in a terminal. |
 | `run5-invalid-and-missing-output.txt` | In a throwaway clone: one quote damaged and committed gives INVALID, a report deleted and committed gives MISSING. Both exit 1. |
 | `run6-weekly-for-real.txt` | `scripts/weekly` run once for real: installed 2.1.285, available 2.1.289, one report (`f507d9c`). |
+| `run7-wrapper-refuses-bad-answers.txt` | In a throwaway clone, with the agent replaced by a fake program: an answer that is not JSON, a quote that is not in the changelog, and an agent that exits with an error. Each time `scripts/run` fails with the reason, exits 1 and writes no report. |
 
-Runs 1, 2, 3, 5 and 6 were started for me by a Claude Code session at my request. Run 4 I typed myself.
+Runs 1, 2, 3, 5, 6 and 7 were started for me by a Claude Code session at my request. Run 4 I typed myself.
