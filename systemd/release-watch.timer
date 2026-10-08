@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly Claude Code release watch
+
+[Timer]
+OnCalendar=Mon *-*-* 09:30
+# Run at the next start if the machine was off on Monday morning.
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

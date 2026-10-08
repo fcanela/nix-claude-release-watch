@@ -1,0 +1,19 @@
+# Not installed by this repository. To install:
+#   ln -s ~/release-watch/systemd/release-watch.service ~/.config/systemd/user/
+#   ln -s ~/release-watch/systemd/release-watch.timer ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now release-watch.timer
+[Unit]
+Description=Claude Code release watch: changes between the installed and the available version
+After=network-online.target graphical-session.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/release-watch
+ExecStart=%h/release-watch/scripts/weekly
+# claude, git and python3 come from the nix profile; notify-send from /usr/bin.
+Environment=PATH=%h/.nix-profile/bin:/usr/bin:/bin
+# Commits are signed with the ssh key held by the agent. Without the key the
+# commit fails and the run writes nothing, rather than waiting for a passphrase.
+Environment=SSH_AUTH_SOCK=%t/ssh-agent
+Environment=GIT_TERMINAL_PROMPT=0
+TimeoutStartSec=45min
