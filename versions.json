@@ -18,5 +18,9 @@
   "b1b875982b17dabde9b4a37f3e229e74913e6db3": {
     "version": "2.1.272",
     "source": "https://raw.githubusercontent.com/NixOS/nixpkgs/b1b875982b17dabde9b4a37f3e229e74913e6db3/pkgs/by-name/cl/claude-code/manifest.zst.json"
+  },
+  "151fa4e8ddfdd8dd25d945ad94ed54a13de9f6e4": {
+    "version": "2.1.289",
+    "source": "https://raw.githubusercontent.com/NixOS/nixpkgs/151fa4e8ddfdd8dd25d945ad94ed54a13de9f6e4/pkgs/by-name/cl/claude-code/manifest.zst.json"
   }
 }

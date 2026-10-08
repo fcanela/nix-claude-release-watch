@@ -1,0 +1,13 @@
+{
+  "after": {
+    "from": "nixpkgs-unstable",
+    "version": "2.1.289"
+  },
+  "before": {
+    "from": "installed",
+    "version": "2.1.285"
+  },
+  "changelog_range_sha256": "5f735bc9643925e436d7a7149e73e870aae968b5fcfb9b2c240eb8342d8f6eac",
+  "schema": 1,
+  "watchlist_sha256": "1ab411228a67c3cd3c093230a76c78e3575be010c778625bf5ceb1765e1d1d93"
+}
